@@ -1,20 +1,53 @@
 <template>
-  <div class="dropdown dropdown_opened">
-    <button type="button" class="dropdown__toggle dropdown__toggle_icon">
-      <ui-icon icon="tv" class="dropdown__icon" />
-      <span>Title</span>
+  <div
+    class="dropdown"
+    :class="{'dropdown_opened': dropdownOpened}"
+  >
+    <button
+      type="button"
+      class="dropdown__toggle"
+      :class="{'dropdown__toggle_icon': hasIcon}"
+      @click="dropdownOpened=!dropdownOpened"
+    >
+      <ui-icon
+        v-if="hasIcon && selectedOption && selectedOption.icon"
+        :icon="selectedOption.icon"
+        class="dropdown__icon"
+      />
+      <span>{{ selectedOption ? selectedOption.text : title }}</span>
     </button>
 
-    <div class="dropdown__menu" role="listbox">
-      <button class="dropdown__item dropdown__item_icon" role="option" type="button">
-        <ui-icon icon="tv" class="dropdown__icon" />
-        Option 1
-      </button>
-      <button class="dropdown__item dropdown__item_icon" role="option" type="button">
-        <ui-icon icon="tv" class="dropdown__icon" />
-        Option 2
+    <div
+      class="dropdown__menu"
+      role="listbox"
+      v-show="dropdownOpened"
+    >
+      <button
+        v-for="option in options"
+        :key="option.value"
+        class="dropdown__item"
+        :class="{'dropdown__item_icon': hasIcon}"
+        role="option"
+        type="button"
+        @click="handleChooseItem(option)"
+      >
+        <ui-icon
+          v-if="option.icon"
+          :icon="option.icon"
+          class="dropdown__icon"
+        />
+        {{ option.text }}
       </button>
     </div>
+
+    <select v-model="hiddenSelect" v-show="false">
+      <option
+        v-for="option in options"
+        :key="option.value"
+        :value="option.value"
+      >{{ option.text }}</option>
+    </select>
+
   </div>
 </template>
 
@@ -23,8 +56,51 @@ import UiIcon from './UiIcon';
 
 export default {
   name: 'UiDropdown',
-
   components: { UiIcon },
+  data: function() {
+    return {
+      dropdownOpened: false,
+    };
+  },
+  props: {
+    title: {
+      type: String,
+      required: true,
+    },
+    options: {
+      type: Array,
+      required: true,
+      validator: function(value) {
+        return value.every(option => option.value && option.text);
+      }
+    },
+    modelValue: {
+      type: String,
+    }
+  },
+  emits: ['update:modelValue'],
+  computed: {
+    hasIcon: function() {
+      return this.options.some(option => option.icon);
+    },
+    selectedOption: function() {
+      return this.options.find(option => option.value === this.modelValue);
+    },
+    hiddenSelect: {
+      get() {
+        return this.modelValue;
+      },
+      set(newValue) {
+        this.$emit('update:modelValue', newValue);
+      }
+    }
+  },
+  methods: {
+    handleChooseItem(option) {
+      this.$emit('update:modelValue', option.value);
+      this.dropdownOpened = false;
+    },
+  },
 };
 </script>
 
