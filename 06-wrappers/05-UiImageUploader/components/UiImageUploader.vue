@@ -1,15 +1,81 @@
 <template>
   <div class="image-uploader">
-    <label class="image-uploader__preview image-uploader__preview-loading" style="--bg-url: url('/link.jpeg')">
-      <span class="image-uploader__text">Загрузить изображение</span>
-      <input type="file" accept="image/*" class="image-uploader__input" />
+    <label
+      class="image-uploader__preview"
+      :class="{ 'image-uploader__preview-loading': loading }"
+    >
+      <span class="image-uploader__text">{{ text }}</span>
+      <input
+        type="file"
+        ref="imageUploader"
+        accept="image/*"
+        class="image-uploader__input"
+        v-bind="$attrs"
+        @click="handleClick"
+        @change="handleChange($event)"
+        :disabled="loading"
+      />
     </label>
   </div>
 </template>
 
 <script>
+const LOADING_TEXT = 'Загрузка...';
+const EMPTY_TEXT = 'Загрузить изображение';
+const DELETE_TEXT = 'Удалить изображение';
+
 export default {
   name: 'UiImageUploader',
+  inheritAttrs: false,
+  data() {
+    return {
+      loading: false,
+      display: null
+    }
+  },
+  props: {
+    preview: String,
+    uploader: Function
+  },
+  computed: {
+    image() {
+      return this.preview ? `url('${this.preview}')` : this.display ? `url('${this.display}')` :'var(--default-cover)';
+    },
+    text() {
+      if ( this.loading ) return LOADING_TEXT;
+      return (this.preview || this.display) ? DELETE_TEXT : EMPTY_TEXT;
+    }
+  },
+  methods: {
+    resetInput() {
+      this.$refs['imageUploader'].value = "";
+    },
+    handleClick(event) {
+      if ( this.preview || this.display ) {
+        event.preventDefault();
+        this.resetInput();
+        this.$emit('remove');
+        this.display = null
+      };
+    },
+    async handleChange(event) {
+      const file = event.target.files[0];
+      this.$emit('select', file);
+      if ( typeof this.uploader === 'function' ) {
+        this.loading = true;
+        try {
+          const result = await this.uploader(file);
+          this.$emit('upload', result);
+        } catch (error) {
+          this.resetInput();
+          this.$emit('error', error);
+        }
+        this.loading = false;
+      } else {
+        this.display = URL.createObjectURL(file);
+      }
+    },
+  }
 };
 </script>
 
@@ -23,7 +89,7 @@ export default {
 }
 
 .image-uploader__preview {
-  --bg-url: var(--default-cover);
+  --bg-url: v-bind(image);
   background-size: cover;
   background-position: center;
   background-image: linear-gradient(0deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), var(--bg-url);

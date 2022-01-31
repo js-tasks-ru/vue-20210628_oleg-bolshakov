@@ -178,6 +178,8 @@ describe('wrappers/UiImageUploader', () => {
     it(`UiImageUploader должен иметь текст на ${EMPTY_TEXT} после удаления изображения из preview`, async () => {
       const wrapper = shallowMount(UiImageUploader, { props: { preview: 'preview.jpeg' } });
       await wrapper.find('label').trigger('click');
+      expect(wrapper.emitted('remove')).toBeDefined();
+      await wrapper.setProps({ preview: undefined });
       expect(wrapper.text()).toContain(EMPTY_TEXT);
     });
 
