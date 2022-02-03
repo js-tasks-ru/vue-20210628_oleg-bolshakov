@@ -1,32 +1,50 @@
 <template>
   <fieldset class="agenda-item-form">
-    <button type="button" class="agenda-item-form__remove-button">
+    <button type="button" class="agenda-item-form__remove-button" @click="handleRemove">
       <ui-icon icon="trash" />
     </button>
 
     <ui-form-group>
-      <ui-dropdown title="Тип" :options="$options.agendaItemTypeOptions" name="type" />
+      <ui-dropdown title="Тип" :options="$options.agendaItemTypeOptions" name="type" v-model="localCopyAgendaItem.type"/>
     </ui-form-group>
 
     <div class="agenda-item-form__row">
       <div class="agenda-item-form__col">
         <ui-form-group label="Начало">
-          <ui-input type="time" placeholder="00:00" name="startsAt" />
+          <ui-input
+            type="time"
+            placeholder="00:00"
+            name="startsAt"
+            v-model="localCopyAgendaItem.startsAt"
+            @change="updateEndsTime"
+          />
         </ui-form-group>
       </div>
       <div class="agenda-item-form__col">
         <ui-form-group label="Окончание">
-          <ui-input type="time" placeholder="00:00" name="endsAt" />
+          <ui-input
+            type="time"
+            placeholder="00:00"
+            name="endsAt"
+            v-model="localCopyAgendaItem.endsAt"
+            @change="calculateDuration"
+          />
         </ui-form-group>
       </div>
     </div>
 
-    <ui-form-group label="Заголовок">
-      <ui-input name="title" />
+    <ui-form-group
+      v-for="(item, key) in formSchema"
+      :key="key"
+      :label="item.label"
+    >
+      <component
+        :is="item.component"
+        v-bind="item.props"
+        v-model="localCopyAgendaItem[key]"
+      />
     </ui-form-group>
-    <ui-form-group label="Описание">
-      <ui-input multiline name="description" />
-    </ui-form-group>
+  
   </fieldset>
 </template>
 
@@ -151,6 +169,9 @@ const agendaItemFormSchemas = {
   },
 };
 
+const HOURS_A_DAY = 24;
+const MINUTES_PER_HOUR = 60;
+
 export default {
   name: 'MeetupAgendaItemForm',
 
@@ -159,12 +180,73 @@ export default {
   agendaItemTypeOptions,
   agendaItemFormSchemas,
 
+  data() {
+    return {
+      localCopyAgendaItem: {
+        ...this.agendaItem
+      },
+      duration: null,
+    }
+  },
+
   props: {
     agendaItem: {
       type: Object,
       required: true,
     },
   },
+
+  computed: {
+    formSchema() {
+      return this.$options.agendaItemFormSchemas[this.localCopyAgendaItem.type];
+    },
+  },
+  
+  watch: {
+    localCopyAgendaItem: {
+      deep: true,
+      handler: function() {
+        this.$emit('update:agendaItem', {...this.localCopyAgendaItem});
+      }
+    },
+  },
+
+  methods: {
+    handleRemove() {
+      this.$emit('remove');
+    },
+    updateEndsTime() {
+      let hours = parseInt(this.localCopyAgendaItem.startsAt.split(':')[0]) + this.duration.hours;
+      let minutes = parseInt(this.localCopyAgendaItem.startsAt.split(':')[1]) + this.duration.minutes;
+      if (minutes >= MINUTES_PER_HOUR) {
+        minutes = minutes % MINUTES_PER_HOUR;
+        hours++;
+      };
+      hours = hours % HOURS_A_DAY;
+      hours = (hours.toString().length < 2) ? '0' + hours : hours;
+      minutes = (minutes.toString().length < 2) ? '0' + minutes : minutes;
+      this.localCopyAgendaItem.endsAt = hours + ':' + minutes;
+    },
+    calculateDuration() {
+      let hours = parseInt(this.localCopyAgendaItem.endsAt.split(':')[0]) - parseInt(this.localCopyAgendaItem.startsAt.split(':')[0]),
+          minutes = parseInt(this.localCopyAgendaItem.endsAt.split(':')[1]) - parseInt(this.localCopyAgendaItem.startsAt.split(':')[1]);
+      if (minutes < 0) {
+        minutes = minutes + MINUTES_PER_HOUR;
+        hours--;
+      };
+      if (hours < 0) {
+        hours = hours + HOURS_A_DAY;
+      };
+      this.duration = {
+        hours,
+        minutes
+      };
+    }
+  },
+
+  mounted() {
+    this.calculateDuration();
+  }
 };
 </script>
 
