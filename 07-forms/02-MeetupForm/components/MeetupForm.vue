@@ -79,9 +79,7 @@ export default {
 
   data() {
     return {
-      localCopyMeetup: {
-        ...cloneDeep(this.meetup),
-      },
+      localCopyMeetup: cloneDeep(this.meetup),
     };
   },
 
