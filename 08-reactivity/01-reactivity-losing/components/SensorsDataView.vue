@@ -42,7 +42,10 @@ export default {
     },
 
     setData(sensors) {
-      this.sensors = sensors;
+      this.sensors = { ...sensors };
+      for (let sensor in this.sensors) {
+        this.sensors[String(sensor)] = { ...this.sensors[String(sensor)] };
+      }
     },
   },
 };

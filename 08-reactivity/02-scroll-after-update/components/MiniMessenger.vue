@@ -1,6 +1,6 @@
 <template>
   <main class="mini-messenger">
-    <ul class="messages">
+    <ul class="messages" ref="messagesContainer">
       <li v-for="message in messages" :key="message.id" class="message">
         {{ message.text }}
       </li>
@@ -42,7 +42,14 @@ export default {
         text: this.newMessage,
       });
       this.newMessage = '';
+      this.$nextTick(() => this.scrollToEnd());
     },
+
+    scrollToEnd: function () {
+      var content = this.$refs.messagesContainer;
+      content.scrollTop = content.scrollHeight;
+    },
+
   },
 };
 </script>
