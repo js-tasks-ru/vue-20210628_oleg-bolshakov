@@ -21,14 +21,19 @@ export default {
     },
   },
 
+  computed: {
+    renderFunction() {
+      return compile(this.template);
+    }
+  },
+
   render() {
-    const renderFunction = compile(this.template);
     const component = defineComponent({
       props: {
         bindings: {type: Object}
       },
       components: this.components,
-      render: renderFunction,
+      render: this.renderFunction,
     });
     return h(component, {bindings: this.bindings});
   },
