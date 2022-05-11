@@ -93,4 +93,4 @@ export default defineConfig({
 🚀 Команда запуска для ручного тестирования: `npm run serve`;\
 приложение будет доступно на [http://localhost:8080/09-rendering/02-TemplateRenderer](http://localhost:8080/09-rendering/02-TemplateRenderer).
 
-✅ Доступно автоматическое тестирование: `npm test VNode`.
+✅ Доступно автоматическое тестирование: `npm test TemplateRenderer`.
